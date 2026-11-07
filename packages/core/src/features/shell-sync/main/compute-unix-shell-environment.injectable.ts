@@ -11,6 +11,7 @@ import getBasenameOfPathInjectable from "../../../common/path/get-basename.injec
 import killProcessGroupInjectable from "../../../main/child-process/kill-process-group.injectable";
 import spawnInjectable from "../../../main/child-process/spawn.injectable";
 import randomUUIDInjectable from "../../../main/crypto/random-uuid.injectable";
+import resolveShellCommandInjectable from "../../../main/shell-session/resolve-shell-command.injectable";
 import processEnvInjectable from "./env.injectable";
 import processExecPathInjectable from "./execPath.injectable";
 
@@ -106,6 +107,7 @@ const computeUnixShellEnvironmentInjectable = getInjectable({
     const randomUUID = di.inject(randomUUIDInjectable);
     const processExecPath = di.inject(processExecPathInjectable);
     const processEnv = di.inject(processEnvInjectable);
+    const resolveShellCommand = di.inject(resolveShellCommandInjectable);
 
     const getShellSpecifics = (shellName: string): ShellSpecifics => {
       const mark = randomUUID().replace(/-/g, "");
@@ -156,7 +158,9 @@ const computeUnixShellEnvironmentInjectable = getInjectable({
       return { shellArgs: ["-l", "-i", "-c", command], stdin: "", overrides: shellOverrides, parseOutput };
     };
 
-    return async (shellPath, opts) => {
+    return async (shellSetting, opts) => {
+      // The environment does not depend on the arguments the setting gives, so only the executable is started.
+      const { command: shellPath } = await resolveShellCommand(shellSetting);
       const shellName = getBasenameOfPath(shellPath);
       const { shellArgs, stdin, overrides, parseOutput } = getShellSpecifics(shellName);
       const { resetEnvPairs, env } = getResetProcessEnv(processEnv, overrides);

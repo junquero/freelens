@@ -10,6 +10,7 @@ import openShellSessionInjectable from "./create-shell-session.injectable";
 import { registerInjectables as registerLocalShellSessionInjectables } from "./local-shell-session/register-injectables";
 import { registerInjectables as registerNodeShellSessionInjectables } from "./node-shell-session/register-injectables";
 import shellSessionProcessesInjectable from "./processes.injectable";
+import resolveShellCommandInjectable from "./resolve-shell-command.injectable";
 import { registerInjectables as registerShellEnvModifierInjectables } from "./shell-env-modifier/register-injectables";
 import shellSessionEnvsInjectable from "./shell-envs.injectable";
 import spawnPtyInjectable from "./spawn-pty.injectable";
@@ -30,6 +31,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(shellSessionProcessesInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(resolveShellCommandInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

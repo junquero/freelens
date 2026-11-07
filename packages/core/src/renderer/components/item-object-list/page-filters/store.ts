@@ -20,6 +20,7 @@ export interface Filter {
 
 interface Dependencies {
   readonly searchUrlParam: PageParam<string>;
+  readonly searchRegexStore: { readonly isEnabled: boolean };
 }
 
 export class PageFiltersStore {
@@ -28,6 +29,11 @@ export class PageFiltersStore {
 
   @computed get activeFilters() {
     return this.filters.filter((filter) => !this.isDisabled.get(filter.type));
+  }
+
+  /** Whether the search query is interpreted as a regular expression. Session-only. */
+  get isSearchRegex(): boolean {
+    return this.dependencies.searchRegexStore.isEnabled;
   }
 
   constructor(protected readonly dependencies: Dependencies) {

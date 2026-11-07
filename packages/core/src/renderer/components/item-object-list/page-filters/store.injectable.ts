@@ -5,6 +5,7 @@
  */
 
 import { getInjectable } from "@ogre-tools/injectable";
+import searchRegexStoreInjectable from "../../input/search-regex-store.injectable";
 import searchUrlPageParamInjectable from "../../input/search-url-page-param.injectable";
 import { PageFiltersStore } from "./store";
 
@@ -13,6 +14,7 @@ const pageFiltersStoreInjectable = getInjectable({
   instantiate: (di) =>
     new PageFiltersStore({
       searchUrlParam: di.inject(searchUrlPageParamInjectable),
+      searchRegexStore: di.inject(searchRegexStoreInjectable),
     }),
 });
 

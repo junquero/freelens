@@ -7,6 +7,8 @@
  */
 
 import persistentSearchStoreInjectable from "./persistent-search-store.injectable";
+import searchHistoryStoreInjectable from "./search-history-store.injectable";
+import searchRegexStoreInjectable from "./search-regex-store.injectable";
 import searchUrlPageParamInjectable from "./search-url-page-param.injectable";
 import { registerInjectables as registerValidatorsInjectables } from "./validators/register-injectables";
 
@@ -20,6 +22,16 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(searchUrlPageParamInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(searchRegexStoreInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(searchHistoryStoreInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

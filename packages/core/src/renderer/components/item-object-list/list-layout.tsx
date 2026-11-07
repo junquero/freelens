@@ -267,7 +267,9 @@ export class NonInjectedItemListLayout<I extends ItemObject, PreLoadStores exten
       const search = this.observableProps.pageFiltersStore.getValues(FilterType.SEARCH)[0] || "";
 
       if (search && searchFilters.length) {
-        const matchesSearch = createSearchMatcher(search);
+        const matchesSearch = createSearchMatcher(search, {
+          regex: this.observableProps.pageFiltersStore.isSearchRegex,
+        });
 
         return items.filter((item) => searchFilters.some((getTexts) => [getTexts(item)].flat().some(matchesSearch)));
       }

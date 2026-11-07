@@ -16,6 +16,11 @@ import type { Terminal } from "./terminal";
 
 export interface ITerminalTab extends DockTab {
   node?: string; // activate node shell mode
+  /**
+   * Set for a tab opened to run a command that Freelens types into it, such as
+   * a pod's container shell. A tab opened with the + button leaves it unset.
+   */
+  commandTab?: boolean;
 }
 
 interface Dependencies {
@@ -37,6 +42,7 @@ export class TerminalStore {
     const api = this.dependencies.createTerminalApi({
       id: tab.id,
       node: tab.node,
+      commandTab: tab.commandTab ? "1" : undefined,
     });
     const terminal = this.dependencies.createTerminal(tab.id, api);
 

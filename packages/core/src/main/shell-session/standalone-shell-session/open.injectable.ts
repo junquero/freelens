@@ -13,6 +13,7 @@ import appNameInjectable from "../../../common/vars/app-name.injectable";
 import isMacInjectable from "../../../common/vars/is-mac.injectable";
 import isWindowsInjectable from "../../../common/vars/is-windows.injectable";
 import httpsProxyConfigurationInjectable from "../../../features/user-preferences/common/https-proxy.injectable";
+import shellArgsForAllTerminalsInjectable from "../../../features/user-preferences/common/shell-args-for-all-terminals.injectable";
 import { buildVersionInitializable } from "../../../features/vars/build-version/common/token";
 import freelensProxyTokenInjectable from "../../freelens-proxy/freelens-proxy-token.injectable";
 import computeUserShellEnvironmentInjectable from "../../kube-tools/compute-user-shell-environment.injectable";
@@ -20,6 +21,7 @@ import getUserShellInjectable from "../../kube-tools/get-user-shell.injectable";
 import resolveKubeToolsInjectable from "../../kube-tools/resolve-kube-tools.injectable";
 import { LocalShellSession } from "../local-shell-session/local-shell-session";
 import shellSessionProcessesInjectable from "../processes.injectable";
+import resolveShellCommandInjectable from "../resolve-shell-command.injectable";
 import modifyTerminalShellEnvInjectable from "../shell-env-modifier/modify-terminal-shell-env.injectable";
 import shellSessionEnvsInjectable from "../shell-envs.injectable";
 import spawnPtyInjectable from "../spawn-pty.injectable";
@@ -65,6 +67,8 @@ const openStandaloneShellSessionInjectable = getInjectable({
       getBasenameOfPath: di.inject(getBasenameOfPathInjectable),
       computeUserShellEnvironment: di.inject(computeUserShellEnvironmentInjectable),
       getUserShell: di.inject(getUserShellInjectable),
+      resolveShellCommand: di.inject(resolveShellCommandInjectable),
+      applyShellArgsToAllTerminals: di.inject(shellArgsForAllTerminalsInjectable),
       spawnPty: di.inject(spawnPtyInjectable),
       stat: di.inject(statInjectable),
       freelensProxyToken: di.inject(freelensProxyTokenInjectable).value,

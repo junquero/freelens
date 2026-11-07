@@ -6,14 +6,20 @@
 
 import { Icon } from "@freelensapp/icon";
 import { storesAndApisCanBeCreatedInjectionToken } from "@freelensapp/kube-api-specifics";
+import { cssNames } from "@freelensapp/utilities";
 import { withInjectables } from "@ogre-tools/injectable-react";
 import { debounce } from "es-toolkit/compat";
 import { compareStructural, observable, reaction } from "mobx";
 import { observer } from "mobx-react";
 import React from "react";
+import { isValidSearchRegex } from "../item-object-list/search-matcher";
 import namespaceStoreInjectable from "../namespaces/store.injectable";
 import persistentSearchStoreInjectable from "./persistent-search-store.injectable";
+import { SearchHistoryMenu } from "./search-history-menu";
+import searchHistoryStoreInjectable from "./search-history-store.injectable";
 import { SearchInput } from "./search-input";
+import { regexIcon, regexOffIcon } from "./search-regex-icons";
+import searchRegexStoreInjectable from "./search-regex-store.injectable";
 import searchUrlPageParamInjectable from "./search-url-page-param.injectable";
 
 import type { PageParam } from "../../navigation/page-param";
@@ -25,15 +31,25 @@ export interface SearchInputUrlProps extends InputProps {
 
 interface Dependencies {
   searchUrlParam: PageParam<string>;
+  searchRegexStore: ReturnType<typeof searchRegexStoreInjectable.instantiate>;
+  searchHistoryStore: ReturnType<typeof searchHistoryStoreInjectable.instantiate>;
   persistentSearchStore: ReturnType<typeof persistentSearchStoreInjectable.instantiate>;
   namespaceStore?: ReturnType<typeof namespaceStoreInjectable.instantiate>;
 }
 
+/** Identifies the icon that opens the history menu of an input among the inputs on the screen. */
+let historyIconCounter = 0;
+
+/** How long the text has to stay unchanged before it is remembered as a search. */
+const HISTORY_IDLE_MS = 1500;
+
 @observer
 class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & Dependencies> {
   private readonly disposers: (() => void)[] = [];
+  private readonly historyIconId = `search-history-icon-${++historyIconCounter}`;
 
   @observable accessor inputVal = ""; // fix: use empty string on init to avoid react warnings
+  @observable private accessor isHistoryOpen = false;
   @observable private accessor lastNamespaceKey = "";
   @observable private accessor lastPlaceholder = "";
   private userTyping = false;
@@ -43,6 +59,9 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
     this.props.persistentSearchStore.setValue(storageKey, val);
     this.userTyping = false;
   }, 250);
+  // A search is remembered once the typing stops, on Enter or when the field is left,
+  // not on every key, so the history does not fill up with the prefixes of a word.
+  readonly rememberSearch = debounce((val: string) => this.props.searchHistoryStore.record(val), HISTORY_IDLE_MS);
 
   private getCurrentNamespaceKey(): string {
     const { namespaceStore } = this.props;
@@ -184,6 +203,7 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
   }
 
   componentWillUnmount(): void {
+    this.rememberSearch.flush();
     this.disposers.forEach((dispose) => dispose());
   }
 
@@ -194,6 +214,36 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
     this.inputVal = value;
     this.updateUrl(value);
     this.updateStorage(storageKey, value);
+    this.rememberSearch(value);
+  };
+
+  onKeyDown = (evt: React.KeyboardEvent<any>) => {
+    if (evt.key === "Enter") {
+      this.rememberSearch.flush();
+    }
+
+    this.props.onKeyDown?.(evt);
+  };
+
+  onBlur = (evt: React.FocusEvent<any>) => {
+    this.rememberSearch.flush();
+    this.props.onBlur?.(evt);
+  };
+
+  openHistory = () => {
+    this.isHistoryOpen = true;
+  };
+
+  closeHistory = () => {
+    this.isHistoryOpen = false;
+  };
+
+  selectFromHistory = (text: string) => {
+    this.setValue(text);
+    // apply the search right away instead of waiting for the debounce
+    this.updateUrl.flush();
+    this.updateStorage.flush();
+    this.rememberSearch.flush();
   };
 
   clear = () => {
@@ -237,8 +287,23 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
     super(props);
   }
 
+  toggleSearchRegex = () => {
+    const { searchRegexStore } = this.props;
+
+    searchRegexStore.setEnabled(!searchRegexStore.isEnabled);
+  };
+
   render() {
-    const { searchUrlParam, persistentSearchStore, namespaceStore, ...searchInputProps } = this.props;
+    const {
+      searchUrlParam,
+      searchRegexStore,
+      searchHistoryStore,
+      persistentSearchStore,
+      namespaceStore,
+      ...searchInputProps
+    } = this.props;
+    const isRegex = searchRegexStore.isEnabled;
+    const isInvalidRegex = isRegex && !isValidSearchRegex(this.inputVal);
 
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -250,6 +315,44 @@ class NonInjectedSearchInputUrl extends React.Component<SearchInputUrlProps & De
           }}
           onClear={this.clear}
           {...searchInputProps}
+          onKeyDown={this.onKeyDown}
+          onBlur={this.onBlur}
+        />
+        <Icon
+          small
+          svg={isRegex ? regexIcon : regexOffIcon}
+          className={cssNames("SearchRegexIcon", { invalid: isInvalidRegex })}
+          aria-pressed={isRegex}
+          onClick={this.toggleSearchRegex}
+          tooltip={
+            isInvalidRegex
+              ? "Invalid regular expression: searching as plain text"
+              : isRegex
+                ? "Disable regular expression search"
+                : "Enable regular expression search"
+          }
+        />
+        <Icon
+          small
+          id={this.historyIconId}
+          material="history"
+          active={this.isHistoryOpen}
+          aria-haspopup="menu"
+          aria-expanded={this.isHistoryOpen}
+          interactive
+          // the menu toggles itself on a click of the icon, and it has no tooltip when it is open
+          tooltip={this.isHistoryOpen ? undefined : "Search history"}
+        />
+        <SearchHistoryMenu
+          htmlFor={this.historyIconId}
+          isOpen={this.isHistoryOpen}
+          open={this.openHistory}
+          close={this.closeHistory}
+          frequent={searchHistoryStore.frequent}
+          recent={searchHistoryStore.recent}
+          onSelect={this.selectFromHistory}
+          onRemove={(text) => searchHistoryStore.remove(text)}
+          onClear={() => searchHistoryStore.clear()}
         />
         <Icon
           small
@@ -269,6 +372,8 @@ export const SearchInputUrl = withInjectables<Dependencies, SearchInputUrlProps>
     return {
       ...props,
       searchUrlParam: di.inject(searchUrlPageParamInjectable),
+      searchRegexStore: di.inject(searchRegexStoreInjectable),
+      searchHistoryStore: di.inject(searchHistoryStoreInjectable),
       persistentSearchStore: di.inject(persistentSearchStoreInjectable),
       namespaceStore: canCreateStores ? di.inject(namespaceStoreInjectable) : undefined,
     };

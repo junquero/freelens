@@ -26,6 +26,7 @@ import type { GetUserShell } from "../kube-tools/get-user-shell.injectable";
 import type { KubeTools } from "../kube-tools/kube-tools";
 import type { Kubectl } from "../kubectl/kubectl";
 import type { ShellSessionProcesses } from "./processes.injectable";
+import type { ResolveShellCommand } from "./resolve-shell-command.injectable";
 import type { ShellSessionEnvs } from "./shell-envs.injectable";
 import type { SpawnPty } from "./spawn-pty.injectable";
 
@@ -151,6 +152,8 @@ export interface ShellSessionDependencies {
   readonly shellSessionProcesses: ShellSessionProcesses;
   computeUserShellEnvironment: ComputeUserShellEnvironment;
   getUserShell: GetUserShell;
+  /** Splits the shell setting into the executable to start and the arguments it gives. */
+  readonly resolveShellCommand: ResolveShellCommand;
   spawnPty: SpawnPty;
   emitAppEvent: EmitAppEvent;
   stat: Stat;
@@ -166,6 +169,12 @@ export interface ShellSessionArgs {
   signal: AbortSignal;
   cluster?: Cluster;
   tabId: string;
+  /**
+   * Set for a terminal opened to run a command that Freelens types into it, such
+   * as the shell of a pod's container. Such a terminal gets the arguments of the
+   * shell setting only when the user chose to give them to every terminal.
+   */
+  commandTab?: boolean;
 }
 
 /**
@@ -421,11 +430,13 @@ export abstract class ShellSession {
     this.dependencies.emitAppEvent({ name: this.ShellType, action: "open" });
   }
 
-  protected async getCachedShellEnv() {
+  /**
+   * @param shell the shell setting to start, by default the one the user setting gives now.
+   */
+  protected async getCachedShellEnv(shell: string = this.dependencies.getUserShell()) {
     // Keyed by the shell too: the environment carries the shell to start as
     // `PTYSHELL`, and is the one of that shell, so a changed shell setting
     // must not start the next terminal with the environment of the old one.
-    const shell = this.dependencies.getUserShell();
     const cacheKey = `${this.cluster?.id ?? standaloneSessionId}:${shell}`;
 
     let env = this.dependencies.shellSessionEnvs.get(cacheKey);
@@ -486,8 +497,11 @@ export abstract class ShellSession {
       isWindows,
     });
 
+    // The setting may carry arguments after the executable, which the session passes on when it starts the shell.
+    const { command } = await this.dependencies.resolveShellCommand(shell);
+
     if (isWindows) {
-      env.PTYSHELL = shell || "powershell.exe";
+      env.PTYSHELL = command || "powershell.exe";
       env.LENS_SESSION = "true";
       // The token has no flag: it has to travel both ways, into WSL and back
       // out to the Windows credential helper that a kubectl in WSL runs.
@@ -495,7 +509,7 @@ export abstract class ShellSession {
         .filter(Boolean)
         .join(":");
     } else {
-      env.PTYSHELL = shell;
+      env.PTYSHELL = command;
     }
 
     env.PTYPID = process.pid.toString();

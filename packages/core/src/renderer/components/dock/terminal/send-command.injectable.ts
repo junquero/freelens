@@ -51,7 +51,7 @@ const sendCommandInjectable = getInjectable({
       if (tabId) {
         selectTab(tabId);
       } else {
-        tabId = createTerminalTab().id;
+        tabId = createTerminalTab({ commandTab: true }).id;
       }
 
       const terminalApi = await waitUntilDefined(() => (tabId ? getTerminalApi(tabId) : undefined));

@@ -65,6 +65,7 @@ const NonInjectedPodAttachMenu: React.FC<PodAttachMenuProps & Dependencies> = (p
     createTerminalTab({
       title: `Pod: ${pod.getName()} (namespace: ${pod.getNs()}) [Attached]`,
       id: shellId,
+      commandTab: true,
     });
 
     sendCommand(commandParts.join(" "), {

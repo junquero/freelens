@@ -22,6 +22,7 @@ import resolveKubeToolsInjectable from "../../kube-tools/resolve-kube-tools.inje
 import kubeconfigManagerInjectable from "../../kubeconfig-manager/kubeconfig-manager.injectable";
 import createKubectlInjectable from "../../kubectl/create-kubectl.injectable";
 import shellSessionProcessesInjectable from "../processes.injectable";
+import resolveShellCommandInjectable from "../resolve-shell-command.injectable";
 import { kubectlStatusOptionsFor, terminalStatusReporterFor } from "../send-terminal-status";
 import shellSessionEnvsInjectable from "../shell-envs.injectable";
 import spawnPtyInjectable from "../spawn-pty.injectable";
@@ -61,6 +62,7 @@ const openNodeShellSessionInjectable = getInjectable({
       createKubeJsonApiForCluster: di.inject(createKubeJsonApiForClusterInjectable),
       computeUserShellEnvironment: di.inject(computeUserShellEnvironmentInjectable),
       getUserShell: di.inject(getUserShellInjectable),
+      resolveShellCommand: di.inject(resolveShellCommandInjectable),
       spawnPty: di.inject(spawnPtyInjectable),
       emitAppEvent: di.inject(emitAppEventInjectable),
       stat: di.inject(statInjectable),

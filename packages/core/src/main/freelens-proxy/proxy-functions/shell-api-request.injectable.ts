@@ -30,6 +30,7 @@ const shellApiRequestInjectable = getInjectable({
       const nodeName = searchParams.get("node") ?? undefined;
       const shellToken = searchParams.get("shellToken") ?? undefined;
       const tabId = searchParams.get("id") ?? undefined;
+      const commandTab = searchParams.get("commandTab") === "1";
       // A terminal opened outside of a cluster session has no cluster to look
       // up, and its token is minted under its own scope.
       const isStandalone = type === "standalone";
@@ -50,6 +51,7 @@ const shellApiRequestInjectable = getInjectable({
             tabId,
             // a node shell is a cluster concept by definition
             nodeName: isStandalone ? undefined : nodeName,
+            commandTab,
           }).catch((error) => {
             logger.error(`[SHELL-SESSION]: failed to open a ${shellKind} shell`, error);
 

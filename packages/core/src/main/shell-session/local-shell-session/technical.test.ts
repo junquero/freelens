@@ -19,6 +19,7 @@ import { TerminalChannels } from "../../../common/terminal/channels";
 import baseBundledBinariesDirectoryInjectable from "../../../common/vars/base-bundled-binaries-dir.injectable";
 import platformInjectable from "../../../common/vars/platform.injectable";
 import computeShellEnvironmentInjectable from "../../../features/shell-sync/main/compute-shell-environment.injectable";
+import shellArgsForAllTerminalsInjectable from "../../../features/user-preferences/common/shell-args-for-all-terminals.injectable";
 import userShellSettingInjectable from "../../../features/user-preferences/common/shell-setting.injectable";
 import userPreferencesStateInjectable from "../../../features/user-preferences/common/state.injectable";
 import { buildVersionStateInjectable } from "../../../features/vars/build-version/main/init.injectable";
@@ -308,9 +309,14 @@ describe("technical unit tests for local shell sessions", () => {
     let kubectlPath: string;
     let sent: TerminalMessage[];
 
-    const openWithShell = async (shell: string, platform = "linux") => {
+    const openWithShell = async (
+      shell: string,
+      platform = "linux",
+      { commandTab = false, applyToAll = false } = {},
+    ) => {
       di.override(platformInjectable, () => platform);
       di.override(userShellSettingInjectable, () => computed(() => shell));
+      di.override(shellArgsForAllTerminalsInjectable, () => computed(() => applyToAll));
 
       await di.inject(openLocalShellSessionInjectable)({
         cluster: new Cluster({
@@ -320,6 +326,7 @@ describe("technical unit tests for local shell sessions", () => {
         }),
         tabId: "my-tab-id",
         websocket: websocket(),
+        commandTab,
       });
 
       const call = spawnPtyMock.mock.calls[0];
@@ -489,6 +496,43 @@ describe("technical unit tests for local shell sessions", () => {
         ["/bin/bash", "/bin/bash"],
         ["/bin/zsh", "/bin/zsh"],
       ]);
+    });
+
+    it("starts the executable the setting names, with the arguments it gives, as for WSL", async () => {
+      const { file, args, env } = await openWithShell("wsl.exe -d Ubuntu", "win32");
+
+      expect(file).toBe("wsl.exe");
+      expect(args).toEqual(["-d", "Ubuntu"]);
+      expect(env.PTYSHELL).toBe("wsl.exe");
+    });
+
+    it("passes the arguments the setting gives before the ones the session adds", async () => {
+      const { file, args, env } = await openWithShell("/bin/zsh -f");
+
+      expect(file).toBe("/bin/zsh");
+      expect(args).toEqual(["-f", "--login"]);
+      expect(env.PTYSHELL).toBe("/bin/zsh");
+    });
+
+    it("leaves out the arguments of the setting for a terminal that runs a command, by default", async () => {
+      const { file, args, env } = await openWithShell("/bin/zsh -f", "linux", { commandTab: true });
+
+      expect(file).toBe("/bin/zsh");
+      expect(args).toEqual(["--login"]);
+      expect(env.PTYSHELL).toBe("/bin/zsh");
+    });
+
+    it("gives the arguments of the setting to a terminal that runs a command, once given to every terminal", async () => {
+      const { file, args } = await openWithShell("/bin/zsh -f", "linux", { commandTab: true, applyToAll: true });
+
+      expect(file).toBe("/bin/zsh");
+      expect(args).toEqual(["-f", "--login"]);
+    });
+
+    it("leaves out the arguments of the setting for a bash that runs a command, and keeps its init file", async () => {
+      const { args } = await openWithShell("/bin/bash --norc", "linux", { commandTab: true });
+
+      expect(args).toEqual(["--init-file", expect.stringContaining(".bash_set_path")]);
     });
 
     it("points KUBECONFIG at the cluster's proxy kubeconfig", async () => {

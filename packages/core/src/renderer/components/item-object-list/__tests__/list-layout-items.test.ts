@@ -33,6 +33,7 @@ const makeLayout = (getItems: () => ItemObject[]) => {
     get: () => search.get(),
     set: (value: string) => search.set(value),
   } as unknown as PageParam<string>;
+  const searchRegexStore = { isEnabled: false };
   const filterItems = vi.fn((items: ItemObject[]) => items);
   const getSearchTexts = vi.fn((item: ItemObject) => item.getName());
   const props = {
@@ -42,7 +43,7 @@ const makeLayout = (getItems: () => ItemObject[]) => {
     searchFilters: [getSearchTexts],
     filterItems: [filterItems],
     renderTableContents: () => [],
-    pageFiltersStore: new PageFiltersStore({ searchUrlParam }),
+    pageFiltersStore: new PageFiltersStore({ searchUrlParam, searchRegexStore }),
   } as unknown as LayoutProps;
   const layout = new NonInjectedItemListLayout(props);
 

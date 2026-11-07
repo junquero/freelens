@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import defaultShellInjectable from "../../../../../../common/vars/default-shell.injectable";
 import { Input } from "../../../../../../renderer/components/input";
 import { SubTitle } from "../../../../../../renderer/components/layout/sub-title";
+import { Switch } from "../../../../../../renderer/components/switch";
 import userPreferencesStateInjectable from "../../../../../user-preferences/common/state.injectable";
 
 import type { UserPreferencesState } from "../../../../../user-preferences/common/state.injectable";
@@ -27,6 +28,12 @@ const NonInjectedTerminalShellPath = observer(({ state, defaultShell }: Dependen
       value={state.shell ?? ""}
       onChange={(value) => (state.shell = value)}
     />
+    <Switch
+      checked={state.applyShellArgsToAllTerminals}
+      onChange={() => (state.applyShellArgsToAllTerminals = !state.applyShellArgsToAllTerminals)}
+    >
+      Give the arguments to every terminal, not only to the ones opened with the + button
+    </Switch>
   </section>
 ));
 

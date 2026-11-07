@@ -16,6 +16,7 @@ import kubeconfigSyncsInjectable from "./kubeconfig-syncs.injectable";
 import lensColorThemePreferenceInjectable from "./lens-color-theme.injectable";
 import userPreferenceDescriptorsInjectable from "./preference-descriptors.injectable";
 import resetThemeInjectable from "./reset-theme.injectable";
+import shellArgsForAllTerminalsInjectable from "./shell-args-for-all-terminals.injectable";
 import userShellSettingInjectable from "./shell-setting.injectable";
 import userPreferencesStateInjectable from "./state.injectable";
 import userPreferencesPersistentStorageInjectable from "./storage.injectable";
@@ -99,6 +100,11 @@ export function registerInjectables(di: DiContainerForInjection): void {
   }
   try {
     di.register(userShellSettingInjectable);
+  } catch (e) {
+    /* Ignore duplicate registration */
+  }
+  try {
+    di.register(shellArgsForAllTerminalsInjectable);
   } catch (e) {
     /* Ignore duplicate registration */
   }

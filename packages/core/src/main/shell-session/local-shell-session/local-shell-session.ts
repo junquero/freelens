@@ -6,12 +6,19 @@
 
 import { ShellSession } from "../shell-session";
 
+import type { IComputedValue } from "mobx";
+
 import type { GetBasenameOfPath } from "../../../common/path/get-basename.injectable";
 import type { JoinPaths } from "../../../common/path/join-paths.injectable";
 import type { ModifyTerminalShellEnv } from "../shell-env-modifier/modify-terminal-shell-env.injectable";
 import type { ShellEnvOptions, ShellSessionArgs, ShellSessionDependencies } from "../shell-session";
 
 export interface LocalShellSessionDependencies extends ShellSessionDependencies {
+  /**
+   * Whether a terminal that runs a command gets the arguments of the shell
+   * setting too, or only a terminal the user opened on demand does.
+   */
+  readonly applyShellArgsToAllTerminals: IComputedValue<boolean>;
   /**
    * The directory holding the init scripts of a cluster shell, which put
    * {@link ShellSessionDependencies.kubeTools}' `PATH` entries back around the
@@ -27,12 +34,14 @@ export interface LocalShellSessionDependencies extends ShellSessionDependencies 
 
 export class LocalShellSession extends ShellSession {
   ShellType = "shell";
+  private readonly commandTab: boolean;
 
   constructor(
     protected readonly dependencies: LocalShellSessionDependencies,
     args: ShellSessionArgs,
   ) {
     super(dependencies, args);
+    this.commandTab = args.commandTab === true;
   }
 
   protected get cwd(): string | undefined {
@@ -65,7 +74,9 @@ export class LocalShellSession extends ShellSession {
   }
 
   public async open() {
-    const shellEnv = await this.getCachedShellEnv();
+    // Read once, so that the environment and the arguments are of the same setting.
+    const shellSetting = this.dependencies.getUserShell();
+    const shellEnv = await this.getCachedShellEnv(shellSetting);
     // extensions can modify the env, but only ever for a cluster
     const env = this.cluster ? this.dependencies.modifyTerminalShellEnv(this.cluster.id, shellEnv) : shellEnv;
     const shell = env.PTYSHELL;
@@ -74,7 +85,11 @@ export class LocalShellSession extends ShellSession {
       throw new Error("PTYSHELL is not defined with the environment");
     }
 
-    const args = await this.getShellArgs(shell);
+    // The arguments the setting gives come first, so that the ones Freelens adds for the session follow them. A
+    // terminal that only runs a command Freelens types into it gets them only if the user gave them to every terminal.
+    const { args: settingArgs } = await this.dependencies.resolveShellCommand(shellSetting);
+    const useSettingArgs = !this.commandTab || this.dependencies.applyShellArgsToAllTerminals.get();
+    const args = [...(useSettingArgs ? settingArgs : []), ...(await this.getShellArgs(shell))];
 
     await this.openShellProcess(shell, args, env);
   }

@@ -21,6 +21,8 @@ export interface OpenShellSessionArgs {
   cluster?: Cluster;
   tabId: string;
   nodeName?: string;
+  /** See {@link ShellSessionArgs.commandTab}. */
+  commandTab?: boolean;
 }
 
 export type OpenShellSession = (args: OpenShellSessionArgs) => Promise<void>;

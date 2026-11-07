@@ -73,6 +73,7 @@ const NonInjectablePodShellMenu: React.FC<PodShellMenuProps & Dependencies> = (p
     createTerminalTab({
       title: `Pod: ${pod.getName()} (namespace: ${pod.getNs()})`,
       id: shellId,
+      commandTab: true,
     });
 
     sendCommand(commandParts.join(" "), {

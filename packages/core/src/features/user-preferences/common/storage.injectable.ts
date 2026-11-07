@@ -57,8 +57,13 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
         state.showTrayIcon = descriptors.showTrayIcon.fromStore(preferences.showTrayIcon);
         state.hotbarAutoHide = descriptors.hotbarAutoHide.fromStore(preferences.hotbarAutoHide);
         state.persistentSearch = descriptors.persistentSearch.fromStore(preferences.persistentSearch);
+        state.searchHistory = descriptors.searchHistory.fromStore(preferences.searchHistory);
+        state.searchRegex = descriptors.searchRegex.fromStore(preferences.searchRegex);
         state.logViewerPreferences = descriptors.logViewerPreferences.fromStore(preferences.logViewerPreferences);
         state.shell = descriptors.shell.fromStore(preferences.shell);
+        state.applyShellArgsToAllTerminals = descriptors.applyShellArgsToAllTerminals.fromStore(
+          preferences.applyShellArgsToAllTerminals,
+        );
         state.syncKubeconfigEntries = descriptors.syncKubeconfigEntries.fromStore(preferences.syncKubeconfigEntries);
         state.terminalConfig = descriptors.terminalConfig.fromStore(preferences.terminalConfig);
         state.terminalCopyOnSelect = descriptors.terminalCopyOnSelect.fromStore(preferences.terminalCopyOnSelect);
@@ -87,8 +92,13 @@ const userPreferencesPersistentStorageInjectable = getInjectable({
             showTrayIcon: descriptors.showTrayIcon.toStore(state.showTrayIcon),
             hotbarAutoHide: descriptors.hotbarAutoHide.toStore(state.hotbarAutoHide),
             persistentSearch: descriptors.persistentSearch.toStore(state.persistentSearch),
+            searchHistory: descriptors.searchHistory.toStore(state.searchHistory),
+            searchRegex: descriptors.searchRegex.toStore(state.searchRegex),
             logViewerPreferences: descriptors.logViewerPreferences.toStore(state.logViewerPreferences),
             shell: descriptors.shell.toStore(state.shell),
+            applyShellArgsToAllTerminals: descriptors.applyShellArgsToAllTerminals.toStore(
+              state.applyShellArgsToAllTerminals,
+            ),
             syncKubeconfigEntries: descriptors.syncKubeconfigEntries.toStore(state.syncKubeconfigEntries),
             terminalConfig: descriptors.terminalConfig.toStore(state.terminalConfig),
             terminalCopyOnSelect: descriptors.terminalCopyOnSelect.toStore(state.terminalCopyOnSelect),

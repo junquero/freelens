@@ -44,3 +44,10 @@
     }
   }
 }
+
+// The regular expression toggle is an icon like the link toggle next to it;
+// an invalid expression turns it red, also under the pointer.
+.Icon.SearchRegexIcon.invalid,
+.Icon.SearchRegexIcon.invalid:hover {
+  color: var(--colorError);
+}

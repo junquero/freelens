@@ -82,7 +82,7 @@ interface Dependencies {
   requestAnimationFrame: RequestAnimationFrame;
 }
 
-class NonInjectedMenu extends React.Component<MenuProps & Dependencies, State> {
+export class NonInjectedMenu extends React.Component<MenuProps & Dependencies, State> {
   static defaultProps = defaultPropsMenu as object;
 
   constructor(props: MenuProps & Dependencies) {
@@ -398,8 +398,14 @@ class NonInjectedMenu extends React.Component<MenuProps & Dependencies, State> {
     }
   }
 
-  protected bindItemRef(item: MenuItem, index: number) {
-    this.items[index] = item;
+  protected bindItemRef(item: MenuItem | null, index: number) {
+    // React calls the ref with null when an item unmounts; keeping that null would make
+    // focusableItems read a property of null the next time the menu opens.
+    if (item) {
+      this.items[index] = item;
+    } else {
+      delete this.items[index];
+    }
   }
 
   render() {
@@ -416,7 +422,7 @@ class NonInjectedMenu extends React.Component<MenuProps & Dependencies, State> {
     const menuItems = React.Children.toArray(children).map((item, index) => {
       if (typeof item === "object" && (item as ReactElement).type === MenuItem) {
         return React.cloneElement(item as ReactElement<any>, {
-          ref: (item: MenuItem) => this.bindItemRef(item, index),
+          ref: (item: MenuItem | null) => this.bindItemRef(item, index),
         });
       }
 

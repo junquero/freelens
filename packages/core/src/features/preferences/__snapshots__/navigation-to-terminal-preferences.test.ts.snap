@@ -995,6 +995,16 @@ exports[`preferences - navigation to terminal preferences > given in preferences
                       class="input-info flex gap-2"
                     />
                   </div>
+                  <label
+                    class="Switch"
+                    data-testid="switch"
+                  >
+                    Give the arguments to every terminal, not only to the ones opened with the + button
+                    <input
+                      role="switch"
+                      type="checkbox"
+                    />
+                  </label>
                 </section>
               </div>
               <div

@@ -21,6 +21,7 @@ import {
   getPreferenceDescriptor,
   packageMirrors,
 } from "./preferences-helpers";
+import { sanitizeSearchHistory } from "./search-history";
 
 import type { ObservableMap } from "mobx";
 
@@ -34,6 +35,7 @@ import type {
   StoredExtensionRegistry,
   TerminalConfig,
 } from "./preferences-helpers";
+import type { SearchHistoryEntry } from "./search-history";
 
 // Written out rather than derived from the injectable: the user preferences
 // state reaches the extension API through `ItemListLayout`, and a type derived
@@ -42,6 +44,7 @@ import type {
 export type PreferenceDescriptors = {
   readonly httpsProxy: PreferenceDescription<string | undefined>;
   readonly shell: PreferenceDescription<string | undefined>;
+  readonly applyShellArgsToAllTerminals: PreferenceDescription<boolean>;
   readonly colorTheme: PreferenceDescription<string>;
   readonly terminalTheme: PreferenceDescription<string>;
   readonly localeTimezone: PreferenceDescription<string>;
@@ -58,6 +61,8 @@ export type PreferenceDescriptors = {
   readonly showTrayIcon: PreferenceDescription<boolean>;
   readonly hotbarAutoHide: PreferenceDescription<boolean>;
   readonly persistentSearch: PreferenceDescription<boolean>;
+  readonly searchHistory: PreferenceDescription<SearchHistoryEntry[]>;
+  readonly searchRegex: PreferenceDescription<boolean>;
   readonly logViewerPreferences: PreferenceDescription<Partial<LogViewerPreferences>, LogViewerPreferences>;
   readonly terminalCopyOnSelect: PreferenceDescription<boolean>;
   readonly hiddenTableColumns: PreferenceDescription<[string, string[]][], Map<string, Set<string>>>;
@@ -86,6 +91,10 @@ const userPreferenceDescriptorsInjectable = getInjectable({
       shell: getPreferenceDescriptor<string | undefined>({
         fromStore: (val) => val,
         toStore: (val) => val || undefined,
+      }),
+      applyShellArgsToAllTerminals: getPreferenceDescriptor<boolean>({
+        fromStore: (val) => val ?? false,
+        toStore: (val) => (!val ? undefined : val),
       }),
       colorTheme: getPreferenceDescriptor<string>({
         fromStore: (val) => val || defaultColorThemePreference,
@@ -150,6 +159,14 @@ const userPreferenceDescriptorsInjectable = getInjectable({
       persistentSearch: getPreferenceDescriptor<boolean>({
         fromStore: (val) => val ?? false,
         toStore: (val) => (!val ? undefined : val),
+      }),
+      searchRegex: getPreferenceDescriptor<boolean>({
+        fromStore: (val) => val ?? false,
+        toStore: (val) => (!val ? undefined : val),
+      }),
+      searchHistory: getPreferenceDescriptor<SearchHistoryEntry[]>({
+        fromStore: (val) => sanitizeSearchHistory(val),
+        toStore: (val) => (val?.length ? val : undefined),
       }),
       logViewerPreferences: getPreferenceDescriptor<Partial<LogViewerPreferences>, LogViewerPreferences>({
         fromStore: (val) => ({

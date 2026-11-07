@@ -13,6 +13,7 @@ import joinPathsInjectable from "../../../common/path/join-paths.injectable";
 import appNameInjectable from "../../../common/vars/app-name.injectable";
 import isMacInjectable from "../../../common/vars/is-mac.injectable";
 import isWindowsInjectable from "../../../common/vars/is-windows.injectable";
+import shellArgsForAllTerminalsInjectable from "../../../features/user-preferences/common/shell-args-for-all-terminals.injectable";
 import { buildVersionInitializable } from "../../../features/vars/build-version/common/token";
 import freelensProxyTokenInjectable from "../../freelens-proxy/freelens-proxy-token.injectable";
 import computeUserShellEnvironmentInjectable from "../../kube-tools/compute-user-shell-environment.injectable";
@@ -21,6 +22,7 @@ import resolveKubeToolsInjectable from "../../kube-tools/resolve-kube-tools.inje
 import kubeconfigManagerInjectable from "../../kubeconfig-manager/kubeconfig-manager.injectable";
 import createKubectlInjectable from "../../kubectl/create-kubectl.injectable";
 import shellSessionProcessesInjectable from "../processes.injectable";
+import resolveShellCommandInjectable from "../resolve-shell-command.injectable";
 import { kubectlStatusOptionsFor, messageOfError, terminalStatusReporterFor } from "../send-terminal-status";
 import modifyTerminalShellEnvInjectable from "../shell-env-modifier/modify-terminal-shell-env.injectable";
 import shellSessionEnvsInjectable from "../shell-envs.injectable";
@@ -37,6 +39,7 @@ export interface OpenLocalShellSessionArgs {
   websocket: WebSocket;
   cluster: Cluster;
   tabId: string;
+  commandTab?: boolean;
 }
 
 export type OpenLocalShellSession = (args: OpenLocalShellSessionArgs) => Promise<void>;
@@ -65,6 +68,8 @@ const openLocalShellSessionInjectable = getInjectable({
       getBasenameOfPath: di.inject(getBasenameOfPathInjectable),
       computeUserShellEnvironment: di.inject(computeUserShellEnvironmentInjectable),
       getUserShell: di.inject(getUserShellInjectable),
+      resolveShellCommand: di.inject(resolveShellCommandInjectable),
+      applyShellArgsToAllTerminals: di.inject(shellArgsForAllTerminalsInjectable),
       spawnPty: di.inject(spawnPtyInjectable),
       stat: di.inject(statInjectable),
       freelensProxyToken: di.inject(freelensProxyTokenInjectable).value,
